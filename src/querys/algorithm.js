@@ -253,7 +253,7 @@ const getCourses = async (rut) => {
     return coursesA
 }
 
-exports.execute = async (rut) => {
+exports.getSemesterStudent = async (rut) => {
     try {        
         const infoStudent = await getStudentByRut(rut);
         const student = new Student(infoStudent.rut_person, infoStudent.cod_plain, infoStudent.year);
