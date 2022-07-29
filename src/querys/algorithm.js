@@ -1,4 +1,4 @@
-const { getPrerequisites, getStudentByRut, getLevelStudent, getCoursesStudent, getAverageApproved } = require("./getInformation");
+const { getPrerequisites, getStudentByRut, getLevelStudent, getCoursesStudent, getAverageApproved, getMaxSemester } = require("./getInformation");
 
 class StudyPlain {
     constructor() {
@@ -232,8 +232,8 @@ class Algorithm {
 
     }
 
-    run() {
-        const asignatures = new Semester();
+    run() {        
+        let asignatures = new Semester()
         this.appendCoursesInit(asignatures);
         const init_node = new Node(asignatures);
         const open_nodes = [];
@@ -261,18 +261,20 @@ exports.getSemesterStudent = async (rut) => {
         const level = await getLevelStudent(student.rut);
         const coursesAvailables = await getCourses(student.rut);
         const averageApproved = await getAverageApproved(student.rut);
-        a = new Algorithm(student, prerequisites, level.level, coursesAvailables, averageApproved.average_approval);
-        let aux = level.level;
-        let current = a.run();
+        const semesterMax = await getMaxSemester(student.rut, student.cod_plain);
+        const algorithm = new Algorithm(student, prerequisites, level.level, coursesAvailables, averageApproved.average_approval);
+        let aux = semesterMax.semester_max;
+        console.log(`aux: ${aux}`)
+        let current = algorithm.run();
         let study_plain = new StudyPlain();
         while (current.next != null) {
-            current.asignatures.setSemester(aux);
-            study_plain.appendSemester(current.asignatures);
-            aux++;
-            current = current.next;
+             current.asignatures.setSemester(aux);
+             study_plain.appendSemester(current.asignatures);
+             aux--;
+             current = current.next;
         }
 
-        return study_plain;
+         return study_plain;
     } catch (err) {
         console.log(err)
     }

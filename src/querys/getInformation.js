@@ -64,4 +64,19 @@ exports.getStudentByRut = async (rut) => {
     } catch (err) {
         console.log(err);
     }
-}
+};
+
+exports.getMaxSemester = async (rut, cod_plain) => {
+    try {
+        const response = await sequelize.query('SELECT get_max_semester_study_plain as semester_max FROM get_max_semester_study_plain(:rut, :cod_plain)',
+        {
+            replacements: {
+                rut,
+                cod_plain
+            }, type: QueryTypes.SELECT
+        });
+        return response[0];
+    } catch (err) {
+        console.log(err);
+    }
+};
