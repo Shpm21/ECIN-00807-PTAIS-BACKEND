@@ -11,6 +11,6 @@ exports.login = async(req, res) => {
         const refreshToken = jwt.sign({rut: user.rut_person}, process.env.JWT_SECRET, {expiresIn: '1h'});
         return res.send({rut: user.rut_person, token: token, refreshToken});
     } catch (err) {
-        return res.status(500).json({err: 'error'});
+        return res.status(500).json({err: 'error en el servidor'});
     }
 }
