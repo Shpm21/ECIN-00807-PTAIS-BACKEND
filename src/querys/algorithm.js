@@ -243,9 +243,9 @@ class Algorithm {
     }
 }
 
-const getCourses = async (rut) => {
+const getCourses = async (rut, cod_study_plain) => {
     const coursesA = new Semester();
-    const courses = await getCoursesStudent(rut);
+    const courses = await getCoursesStudent(rut, cod_study_plain);
     courses.forEach((c) => {
         coursesA.appendCourse(new Course(c.cod, c.name, c.credit, c.semester, c.approved));
     });
@@ -258,8 +258,8 @@ exports.getSemesterStudent = async (rut) => {
         const infoStudent = await getStudentByRut(rut);
         const student = new Student(infoStudent.rut_person, infoStudent.cod_plain, infoStudent.year);
         const prerequisites = await getPrerequisites(student.cod_plain);
-        const level = await getLevelStudent(student.rut);
-        const coursesAvailables = await getCourses(student.rut);
+        const level = await getLevelStudent(student.rut, student.cod_plain);
+        const coursesAvailables = await getCourses(student.rut, student.cod_plain);
         const averageApproved = await getAverageApproved(student.rut);
         const semesterMax = await getMaxSemester(student.rut, student.cod_plain);
         const algorithm = new Algorithm(student, prerequisites, level.level, coursesAvailables, averageApproved.average_approval);

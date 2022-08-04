@@ -2,11 +2,12 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../connect');
 const Student = require('../models/student');
 
-exports.getCoursesStudent = async (rut)  => {
+exports.getCoursesStudent = async (rut, cod_study_plain)  => {
     try {
-        const response = await sequelize.query('SELECT * FROM get_courses_student(:rut)', {
+        const response = await sequelize.query('SELECT * FROM get_courses_student(:rut, :cod_study_plain)', {
             replacements: {
-                rut
+                rut,
+                cod_study_plain
             }, 
             type: QueryTypes.SELECT
         });
@@ -30,11 +31,12 @@ exports.getPrerequisites = async (cod_plain) => {
     }
 };
 
-exports.getLevelStudent = async (rut) => {
+exports.getLevelStudent = async (rut, cod_study_plain) => {
     try {
-        const response = await sequelize.query('SELECT get_level_student as level FROM get_level_student(:rut)', {
+        const response = await sequelize.query('SELECT get_level_student as level FROM get_level_student(:rut, :cod_study_plain)', {
             replacements: {
-                rut
+                rut,
+                cod_study_plain
             }, type: QueryTypes.SELECT
         });
         return response[0];
