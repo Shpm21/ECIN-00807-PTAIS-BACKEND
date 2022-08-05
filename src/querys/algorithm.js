@@ -8,6 +8,18 @@ class StudyPlain {
     appendSemester(semester) {
         this.semesters.push(semester);
     }
+
+    existCapstoneProject() {
+        let exist = false;
+        this.semesters.forEach((s) => {
+            s.courses.forEach((c) => {
+                if (c.credit == 30) {
+                    exist = true;
+                }
+            })
+        });
+        return exist
+    }
 }
 class Semester {
     constructor() {
@@ -128,14 +140,6 @@ class Algorithm {
         return node.asignatures.courses[0].credit - 30;
     }
 
-    appendCoursesInit(asignatures) {
-        this.coursesAvailables.courses.forEach((c) => {
-            if (c.semester === this.student.level && !c.approved) {
-                asignatures.appendCourse(c);
-            };
-        });
-    }
-
 
     searchPrereq(cod) {
         const list = [];
@@ -147,16 +151,15 @@ class Algorithm {
         return list;
     }
 
-    getNewLevelStudent() {
-        let level = this.student.level + 1;
-        this.coursesAvailables.courses.forEach((c) => {
-            if (!c.approved) {
-                if (c.semester < level) {
-                    level = c.semester;
-                };
-            };
-        });
-        return level;
+
+    returnSolution(current) {
+        if(current.next == null) {
+            return current;
+        }
+        while (current.next.next != null) {
+            current = current.next;
+        }
+        return current;
     }
 
     executeAlgorithm(open_nodes, close_nodes) {
@@ -169,9 +172,7 @@ class Algorithm {
             });
             let current = open_nodes.pop(i);
             if (current.h == 0) {
-                if(current.next == null)
-                    return current;
-                return current;
+                return this.returnSolution(current);
             }
 
             close_nodes.push(current);
@@ -209,7 +210,7 @@ class Algorithm {
             }
 
             nextAsignatures.setApproved(true);
-            this.student.level = this.getNewLevelStudent();
+            this.student.level = setNewLevelStudent(this.coursesAvailables);
             successor.push(new Node(nextAsignatures));
             
             successor.forEach((succ) => {
@@ -232,9 +233,7 @@ class Algorithm {
 
     }
 
-    run() {        
-        let asignatures = new Semester()
-        this.appendCoursesInit(asignatures);
+    run(asignatures, i) {        
         const init_node = new Node(asignatures);
         const open_nodes = [];
         const close_nodes = [];
@@ -253,28 +252,82 @@ const getCourses = async (rut, cod_study_plain) => {
     return coursesA
 }
 
+const appendCoursesInit = (coursesAvailables, level) => {
+    const asignatures = new Semester();
+    coursesAvailables.courses.forEach((c) => {
+        if (c.semester === level && c.approved) {
+            asignatures.appendCourse(c);
+        };
+    });
+    return asignatures;
+}
+
+const getNewLevelStudent = (coursesAvailables, student) => {
+    let level = student.level + 1;
+    coursesAvailables.courses.forEach((c) => {
+        if (!c.approved) {
+            if (c.semester < level) {
+                level = c.semester;
+            };
+        };
+    });
+    return level;
+}
+
+const setNewLevelStudent = (coursesAvailablesAux) => {
+    let level = 9999
+    coursesAvailablesAux.courses.forEach((c) => {
+        if (!c.approved) {
+            if(c.semester < level) {
+                level = c.semester;
+            }
+        }
+    });
+    return level
+}
+
+const setCoursesApproved = (coursesAvailablesAux, asignatures) => {
+    coursesAvailablesAux.courses.forEach((c) => {
+        asignatures.courses.forEach((a) => {
+            if (c.cod == a.cod) {
+                c.approved = true;
+            }
+        })
+    })
+}
+
+const updateCoursesAvailable = (coursesAvailablesAux) => {
+    const asignatures = new Semester();
+    coursesAvailablesAux.courses.forEach((c) => {
+        asignatures.appendCourse(new Course(c.cod, c.name, c.credit, c.semester, c.approved));
+    });
+    return asignatures;
+}
 exports.getSemesterStudent = async (rut, isAverageApproval) => {
     try {        
         const infoStudent = await getStudentByRut(rut);
         const student = new Student(infoStudent.rut_person, infoStudent.cod_plain, infoStudent.year);
         const prerequisites = await getPrerequisites(student.cod_plain);
         const level = await getLevelStudent(student.rut, student.cod_plain);
-        const coursesAvailables = await getCourses(student.rut, student.cod_plain);
+        let coursesAvailables = await getCourses(student.rut, student.cod_plain);
+        const coursesAvailablesAux = await getCourses(student.rut, student.cod_plain);
         const averageApproved = isAverageApproval ? 30 : await getAverageApproved(student.rut);
-        const semesterMax = await getMaxSemester(student.rut, student.cod_plain);
         const algorithm = new Algorithm(student, prerequisites, level.level, coursesAvailables, averageApproved);
-        let aux = semesterMax.semester_max;
-        console.log(`aux: ${aux}`)
-        let current = algorithm.run();
+        let aux = level.level;
+        let asignatures = appendCoursesInit(coursesAvailables, level.level);
         let study_plain = new StudyPlain();
-        while (current.next != null) {
-             current.asignatures.setSemester(aux);
-             study_plain.appendSemester(current.asignatures);
-             aux--;
-             current = current.next;
+        let i = 0;
+        while (!study_plain.existCapstoneProject()) {
+            asignatures = algorithm.run(asignatures, i).asignatures;
+            setCoursesApproved(coursesAvailablesAux, asignatures);
+            algorithm.coursesAvailables = updateCoursesAvailable(coursesAvailablesAux);
+            asignatures.semester = aux;
+            study_plain.appendSemester(asignatures);
+            student.level = setNewLevelStudent(coursesAvailablesAux);
+            aux++;
+            i++;
         }
-
-         return study_plain;
+        return study_plain;
     } catch (err) {
         console.log(err)
     }
