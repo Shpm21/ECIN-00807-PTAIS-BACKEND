@@ -53,7 +53,7 @@ exports.getAverageApproved = async (rut) => {
                 rut
             }, type: QueryTypes.SELECT
         });
-        return response[0];
+        return response[0].average_approval;
     } catch (err) {
         console.log(err);
     }
