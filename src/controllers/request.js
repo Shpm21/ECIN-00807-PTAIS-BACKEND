@@ -5,7 +5,9 @@ exports.getCoursesAvailable = async (req, res) => {
     try {
         const rut = req.body.rutStudent;
         const isAverageApproval = req.body.isAverageApproval;
-        const response = await getSemesterStudent(rut, isAverageApproval);
+        const dis = req.body.dispersion;
+        const dispersion  = dis ? dis : 2;
+        const response = await getSemesterStudent(rut, isAverageApproval, dispersion);
         return res.status(200).json(response);
     } catch (err) {
         return res.status(500).json(err);

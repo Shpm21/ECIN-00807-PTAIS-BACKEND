@@ -5,5 +5,4 @@ const { validateTokenAuthentication, validateRut } = require('../middlewares/mid
 
 router.get('/students/', validateTokenAuthentication , StudentController.getStudents);
 router.get('/students/:rut', validateRut, validateTokenAuthentication,  StudentController.getStudentByRut);
-
 module.exports = router;

@@ -4,7 +4,7 @@ class StudyPlain {
     constructor() {
         this.semesters = [];
     }
-
+    
     appendSemester(semester) {
         this.semesters.push(semester);
     }
@@ -21,6 +21,7 @@ class StudyPlain {
         return exist
     }
 }
+
 class Semester {
     constructor() {
         this.semester = null;
@@ -34,7 +35,7 @@ class Semester {
     appendCourse(course) {
         this.courses.push(course);
     }
-
+    
     getCourseBySemester(semester) {
         let coursesN = [];
         this.courses.forEach((c) => {
@@ -92,6 +93,7 @@ class Course {
         return `cod ${this.cod}, name ${this.name}, credit ${this.credit}, semester ${this.semester}, approved ${this.approved}`;
     }
 }
+
 class Student {
     constructor(rut, cod_plain, year) {
         this.rut = rut;
@@ -119,13 +121,15 @@ class Node {
         this.next = next;
     }
 }
+
 class Algorithm {
-    constructor(student, prerequisites, level, coursesAvailables, averageApproved) {
+    constructor(student, prerequisites, level, coursesAvailables, averageApproved, dispersion) {
         this.student = student;
         this.prerequisites = prerequisites;
         this.level = level;
         this.coursesAvailables = coursesAvailables;
         this.averageApproved = averageApproved;
+        this.dispersion = dispersion;
         this.student.setLevel(this.level);
     }
 
@@ -139,6 +143,7 @@ class Algorithm {
     heuristic(node) {
         return node.asignatures.courses[0].credit - 30;
     }
+    
 
 
     searchPrereq(cod) {
@@ -162,6 +167,82 @@ class Algorithm {
         return current;
     }
 
+    getNextAsignatures() {
+        let sum = 0;
+        const nextAsignatures = new Semester();
+        let j = this.student.level;
+        let currentSemester = 1;
+        while (sum < this.averageApproved && j < this.student.level + this.dispersion
+            ) {
+            this.coursesAvailables.getCourseBySemester(j).forEach((co) => {
+                if (!co.approved) {
+                    const listPrer = this.searchPrereq(co.cod);
+                    let approved = true;
+                    
+                    listPrer.forEach((cod) => {
+                        let c = this.coursesAvailables.getCourseByCod(cod);
+                        if (!c.approved) {
+                            approved = false;
+                        }
+                    });
+                    
+                    if (approved) {
+                        console.log(currentSemester % 2);
+                        if ((currentSemester % 2 == 0) && (co.semester % 2 == 0)) {
+                            if (co.credit === 30 && this.student.level === co.semester) {
+                                nextAsignatures.appendCourse(co);
+                                sum = 30;
+                            } else {
+                                if (this.averageApproved >= (sum + co.credit)) {
+                                    nextAsignatures.appendCourse(co);
+                                    sum += co.credit;
+                                }
+                            }
+                        } else if ((currentSemester % 2 != 0) && (co.semester % 2 != 0)) {
+                            if (co.credit === 30 && this.student.level === co.semester) {
+                                nextAsignatures.appendCourse(co);
+                                sum = 30;
+                            } else {
+                                if (this.averageApproved >= (sum + co.credit)) {
+                                    nextAsignatures.appendCourse(co);
+                                    sum += co.credit;
+                                }
+                            }
+                        }
+
+                    }
+                }
+            });
+            if (currentSemester === 1) {
+                currentSemester = 2;
+            } else {
+                currentSemester = 1;
+            }
+            j++;
+        }
+
+        return nextAsignatures;
+    }
+
+    setSuccesor(successor, open_nodes, current) {
+        successor.forEach((succ) => {
+            let g = current.g + 1;
+            let best = false;
+            if (!(succ in open_nodes)) {
+                succ.h = this.heuristic(succ);
+                open_nodes.push(succ);
+                best = true;
+            } else if (current.g < succ.g) {
+                best = true;
+            }
+
+            if (best)
+                succ.next = current
+                succ.g = g;
+                succ.f = succ.g + succ.h;
+        });
+    }
+
     executeAlgorithm(open_nodes, close_nodes) {
         while (open_nodes.length > 0) {
             let i = 0;
@@ -174,66 +255,21 @@ class Algorithm {
             if (current.h == 0) {
                 return this.returnSolution(current);
             }
-
             close_nodes.push(current);
+            
             const successor = [];
-            let sum = 0;
-            const nextAsignatures = new Semester();
-            let j = this.student.level;
-            while (sum < this.averageApproved && j < this.student.level + 2) {
-                this.coursesAvailables.getCourseBySemester(j).forEach((co) => {
-                    if (!co.approved) {
-                        const listPrer = this.searchPrereq(co.cod);
-                        let approved = true;
-                        
-                        listPrer.forEach((cod) => {
-                            let c = this.coursesAvailables.getCourseByCod(cod);
-                            if (!c.approved) {
-                                approved = false;
-                            }
-                        });
-                        
-                        if (approved) {
-                            if (co.credit === 30 && this.student.level === co.semester) {
-                                nextAsignatures.appendCourse(co);
-                                sum = 30;
-                            } else {
-                                if (this.averageApproved >= (sum + co.credit)) {
-                                    nextAsignatures.appendCourse(co);
-                                    sum += co.credit;
-                                }
-                            }
-                        }
-                    }
-                });
-                j++;
-            }
+
+            let nextAsignatures = this.getNextAsignatures();
 
             nextAsignatures.setApproved(true);
             this.student.level = setNewLevelStudent(this.coursesAvailables);
             successor.push(new Node(nextAsignatures));
-            
-            successor.forEach((succ) => {
-                let g = current.g + 1;
-                let best = false;
-                if (!(succ in open_nodes)) {
-                    succ.h = this.heuristic(succ);
-                    open_nodes.push(succ);
-                    best = true;
-                } else if (current.g < succ.g) {
-                    best = true;
-                }
-
-                if (best)
-                    succ.next = current
-                    succ.g = g;
-                    succ.f = succ.g + succ.h;
-            });
+            this.setSuccesor(successor, open_nodes, current);
         }
 
     }
 
-    run(asignatures, i) {        
+    run(asignatures) {        
         const init_node = new Node(asignatures);
         const open_nodes = [];
         const close_nodes = [];
@@ -303,7 +339,8 @@ const updateCoursesAvailable = (coursesAvailablesAux) => {
     });
     return asignatures;
 }
-exports.getSemesterStudent = async (rut, isAverageApproval) => {
+
+exports.getSemesterStudent = async (rut, isAverageApproval, dispersions) => {
     try {        
         const infoStudent = await getStudentByRut(rut);
         const student = new Student(infoStudent.rut_person, infoStudent.cod_plain, infoStudent.year);
@@ -312,20 +349,20 @@ exports.getSemesterStudent = async (rut, isAverageApproval) => {
         let coursesAvailables = await getCourses(student.rut, student.cod_plain);
         const coursesAvailablesAux = await getCourses(student.rut, student.cod_plain);
         const averageApproved = isAverageApproval ? 30 : await getAverageApproved(student.rut);
-        const algorithm = new Algorithm(student, prerequisites, level.level, coursesAvailables, averageApproved);
+        const algorithm = new Algorithm(student, prerequisites, level.level, coursesAvailables, averageApproved, dispersions);
         let aux = level.level;
         let asignatures = appendCoursesInit(coursesAvailables, level.level);
         let study_plain = new StudyPlain();
-        let i = 0;
         while (!study_plain.existCapstoneProject()) {
-            asignatures = algorithm.run(asignatures, i).asignatures;
+            current = algorithm.run(asignatures);
+            //console.log(`g: ${current.g} h: ${current.h}`);
+            asignatures = current.asignatures
             setCoursesApproved(coursesAvailablesAux, asignatures);
             algorithm.coursesAvailables = updateCoursesAvailable(coursesAvailablesAux);
             asignatures.semester = aux;
             study_plain.appendSemester(asignatures);
             student.level = setNewLevelStudent(coursesAvailablesAux);
             aux++;
-            i++;
         }
         return study_plain;
     } catch (err) {
