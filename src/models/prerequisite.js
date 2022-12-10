@@ -1,30 +1,22 @@
 const { sequelize } = require('../connect');
 const { Sequelize } = require('sequelize');
 
-const SubjectTaken = sequelize.define('subjects_taken', {
-        cod_course: {
-            type: Sequelize.DataTypes.TEXT,
-            allowNull: false,
-            primaryKey: true,
-        },
+const Prerequisite = sequelize.define('prerequisite', {
         cod_plain: {
             type: Sequelize.DataTypes.TEXT,
             allowNull: false,
             primaryKey: true,
         },
-        rut_person: {
+        cod_course: {
             type: Sequelize.DataTypes.TEXT,
             allowNull: false,
             primaryKey: true,
         },
-        qualification: {
+        cod_course_pre: {
             type: Sequelize.DataTypes.TEXT,
-            allowNull: true,
-        },
-        approved: {
-            type: Sequelize.DataTypes.BOOLEAN,
             allowNull: false,
-        }
+            primaryKey: true,
+        },
     },
     {
         freezeTableName: true,
@@ -32,4 +24,4 @@ const SubjectTaken = sequelize.define('subjects_taken', {
       }
 );
 
-module.exports = SubjectTaken;
+module.exports = Prerequisite;

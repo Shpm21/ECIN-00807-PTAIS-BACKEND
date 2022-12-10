@@ -22,10 +22,20 @@ exports.validateTokenAuthentication = (req, res, next) => {
     }
 }
 
+exports.validateRutBody = (req, res, next) => {
+    try {
+        if (isRutValid(req.body.rutStudent))
+            return next();
+        return res.status(404).json({message: 'Rut no valido'});
+    } catch (err) {
+        return res.status(500).json({message: 'Error en el servidor'});
+    }
+}
+
 exports.validateRut = (req, res, next) => {
     try {        
         if (isRutValid(req.params.rut))
-            return next()
+            return next();
         return res.status(404).json({message: 'Rut no valido'});
     } catch (err) {
         return res.status(500).json({message: 'Error en el servidor'});

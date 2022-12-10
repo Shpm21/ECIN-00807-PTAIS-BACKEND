@@ -1,8 +1,28 @@
-const { Router } = require('express');
+const { Router } = require("express");
 const router = Router();
-const RequestController = require('../controllers/request');
-const { validateTokenAuthentication, validateRut } = require('../middlewares/middlewares');
+const RequestController = require("../controllers/request");
+const {
+  validateTokenAuthentication,
+  validateRut,
+  validateRutBody,
+} = require("../middlewares/middlewares");
 
-router.get('/request/:rut', validateRut, validateTokenAuthentication, RequestController.getCoursesAvailable);
+router.post(
+  "/request/",
+  validateRutBody,
+  validateTokenAuthentication,
+  RequestController.getCoursesAvailable
+);
+router.get(
+  "/averageapproval/:rut",
+  validateRut,
+  validateTokenAuthentication,
+  RequestController.getAverageApproval
+);
+router.get(
+  "/postrequisites/:codCourse",
+  validateTokenAuthentication,
+  RequestController.getAllPostRequisitesController
+);
 
 module.exports = router;

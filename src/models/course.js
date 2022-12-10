@@ -14,6 +14,10 @@ const Course = sequelize.define('course', {
         semester: {
             type: Sequelize.DataTypes.INTEGER,
             allowNull: false
+        },
+        credit : {
+            type: Sequelize.DataTypes.INTEGER,
+            allowNullL: false
         }
     },
     {
