@@ -5,7 +5,7 @@ require("dotenv").config();
 exports.login = async (req, res) => {
   try {
     const user = await Student.findByPk(req.body.rutStudent);
-    if (!user) return res.status(400).json("Credeinciales invalidas");
+    if (!user) return res.status(400).json("Credenciales invalidas");
     const token = jwt.sign({ rut: user.rut_person }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
